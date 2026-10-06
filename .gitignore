@@ -36,3 +36,7 @@ build/
 data/
 *.log
 
+
+# Local H2 database and logs
+data/
+*.log
