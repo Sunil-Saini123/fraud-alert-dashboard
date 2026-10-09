@@ -9,12 +9,31 @@
   th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
   th { background: #f0f0f0; }
   .message { color: #1b6e2d; font-weight: bold; }
+  #search-form input, #search-form select { padding: 6px; margin-right: 6px; }
 </style>
 </head>
 <body>
 <h1>Fraud Alerts</h1>
-<p><a id="new-alert-link" th:href="@{/alerts/new}">Add new alert</a></p>
+<p>
+  <a id="dashboard-link" th:href="@{/}">Dashboard</a> |
+  <a id="new-alert-link" th:href="@{/alerts/new}">Add new alert</a>
+</p>
 <p id="success-message" class="message" th:if="${message}" th:text="${message}"></p>
+
+<form id="search-form" th:action="@{/alerts}" method="get">
+  <input type="text" id="q" name="q" th:value="${q}" placeholder="Transaction ID or customer">
+  <select id="status" name="status">
+    <option value="">All statuses</option>
+    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == status}"></option>
+  </select>
+  <select id="risk" name="risk">
+    <option value="">All risk levels</option>
+    <option th:each="r : ${riskLevels}" th:value="${r}" th:text="${r}" th:selected="${r == risk}"></option>
+  </select>
+  <button id="search-button" type="submit">Search</button>
+  <a id="clear-link" th:href="@{/alerts}">Clear</a>
+</form>
+<p id="result-count" th:text="${#lists.size(alerts)} + ' alert(s) shown'"></p>
 
 <table id="alert-table" th:unless="${#lists.isEmpty(alerts)}">
   <thead>
