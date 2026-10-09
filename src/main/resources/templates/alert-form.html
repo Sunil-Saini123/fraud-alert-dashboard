@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Add Fraud Alert</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 2rem; max-width: 520px; }
+  label { display: block; margin-top: 12px; font-weight: bold; }
+  input, select { width: 100%; padding: 6px; box-sizing: border-box; }
+  .error { color: #b00020; font-size: 0.9em; }
+  button { margin-top: 16px; padding: 8px 16px; }
+</style>
+</head>
+<body>
+<h1>Add Fraud Alert</h1>
+<form id="alert-form" th:action="@{/alerts}" th:object="${alert}" method="post">
+
+  <label for="transactionId">Transaction ID</label>
+  <input type="text" th:field="*{transactionId}">
+  <span class="error" id="transactionId-error" th:if="${#fields.hasErrors('transactionId')}" th:errors="*{transactionId}"></span>
+
+  <label for="customerName">Customer name</label>
+  <input type="text" th:field="*{customerName}">
+  <span class="error" id="customerName-error" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}"></span>
+
+  <label for="amount">Amount</label>
+  <input type="number" step="0.01" th:field="*{amount}">
+  <span class="error" id="amount-error" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></span>
+
+  <label for="riskLevel">Risk level</label>
+  <select th:field="*{riskLevel}">
+    <option value="">-- select --</option>
+    <option th:each="r : ${riskLevels}" th:value="${r}" th:text="${r}"></option>
+  </select>
+  <span class="error" id="riskLevel-error" th:if="${#fields.hasErrors('riskLevel')}" th:errors="*{riskLevel}"></span>
+
+  <label for="status">Status</label>
+  <select th:field="*{status}">
+    <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}"></option>
+  </select>
+  <span class="error" id="status-error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></span>
+
+  <label for="reason">Reason</label>
+  <input type="text" th:field="*{reason}">
+  <span class="error" id="reason-error" th:if="${#fields.hasErrors('reason')}" th:errors="*{reason}"></span>
+
+  <label for="dueDate">Due date</label>
+  <input type="date" th:field="*{dueDate}">
+  <span class="error" id="dueDate-error" th:if="${#fields.hasErrors('dueDate')}" th:errors="*{dueDate}"></span>
+
+  <button id="save-button" type="submit">Save alert</button>
+  <a id="cancel-link" th:href="@{/alerts}">Cancel</a>
+</form>
+</body>
+</html>

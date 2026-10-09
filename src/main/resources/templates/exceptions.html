@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Exception View</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 2rem; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+  th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+  th { background: #f0f0f0; }
+</style>
+</head>
+<body>
+<h1>Alert Exceptions</h1>
+<p>High-risk alerts and overdue alerts that are not closed.</p>
+<p>
+  <a id="dashboard-link" th:href="@{/}">Dashboard</a> |
+  <a id="all-alerts-link" th:href="@{/alerts}">All alerts</a>
+</p>
+
+<table id="exception-table" th:unless="${#lists.isEmpty(alerts)}">
+  <thead>
+    <tr>
+      <th>Transaction ID</th>
+      <th>Customer</th>
+      <th>Amount</th>
+      <th>Risk level</th>
+      <th>Status</th>
+      <th>Due date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr th:each="a : ${alerts}">
+      <td th:text="${a.transactionId}"></td>
+      <td th:text="${a.customerName}"></td>
+      <td th:text="${a.amount}"></td>
+      <td th:text="${a.riskLevel}"></td>
+      <td th:text="${a.status}"></td>
+      <td th:text="${a.dueDate}"></td>
+    </tr>
+  </tbody>
+</table>
+<p id="no-exceptions" th:if="${#lists.isEmpty(alerts)}">No exceptions found.</p>
+</body>
+</html>
