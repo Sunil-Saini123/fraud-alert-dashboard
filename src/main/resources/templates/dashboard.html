@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Fraud Alert Dashboard</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 2rem; }
+  .cards { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+  .card { display: block; min-width: 140px; padding: 14px 18px; border: 1px solid #ccc; border-radius: 6px;
+          text-decoration: none; color: #111; background: #f7f7f7; }
+  .card .count { display: block; font-size: 2rem; font-weight: bold; }
+  .card.exception { background: #fdecea; border-color: #e0a09a; }
+</style>
+</head>
+<body>
+<h1>Fraud Alert Dashboard</h1>
+<p>
+  <a id="all-alerts-link" th:href="@{/alerts}">All alerts</a> |
+  <a id="new-alert-link" th:href="@{/alerts/new}">Add new alert</a>
+</p>
+
+<div class="cards">
+  <a class="card" id="indicator-total" th:href="@{/alerts}">
+    Total alerts
+    <span class="count" th:text="${total}">0</span>
+  </a>
+  <a class="card" th:each="entry : ${counts}" th:id="'indicator-' + ${entry.key}"
+     th:href="@{/alerts(status=${entry.key})}">
+    <span th:text="${entry.key}">STATUS</span>
+    <span class="count" th:text="${entry.value}">0</span>
+  </a>
+  <a class="card exception" id="indicator-exceptions" th:href="@{/exceptions}">
+    Exceptions
+    <span class="count" th:text="${exceptionCount}">0</span>
+  </a>
+</div>
+</body>
+</html>
