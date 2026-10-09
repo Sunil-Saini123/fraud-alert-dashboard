@@ -26,6 +26,17 @@ public class AlertService {
         return alertRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
+    public List<Alert> search(String q, AlertStatus status, RiskLevel riskLevel) {
+        String term = (q == null) ? "" : q.trim().toLowerCase();
+        return findAll().stream()
+                .filter(a -> term.isEmpty()
+                        || a.getTransactionId().toLowerCase().contains(term)
+                        || a.getCustomerName().toLowerCase().contains(term))
+                .filter(a -> status == null || a.getStatus() == status)
+                .filter(a -> riskLevel == null || a.getRiskLevel() == riskLevel)
+                .toList();
+    }
+
     public boolean transactionIdExists(String transactionId) {
         return alertRepository.existsByTransactionId(transactionId);
     }
