@@ -6,6 +6,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.fraudalert.model.Alert;
@@ -25,8 +26,15 @@ public class AlertController {
     }
 
     @GetMapping("/alerts")
-    public String list(Model model) {
-        model.addAttribute("alerts", alertService.findAll());
+    public String list(@RequestParam(name = "q", required = false) String q,
+                       @RequestParam(name = "status", required = false) AlertStatus status,
+                       @RequestParam(name = "risk", required = false) RiskLevel riskLevel,
+                       Model model) {
+        model.addAttribute("alerts", alertService.search(q, status, riskLevel));
+        model.addAttribute("q", q);
+        model.addAttribute("status", status);
+        model.addAttribute("risk", riskLevel);
+        addOptions(model);
         return "alerts";
     }
 
