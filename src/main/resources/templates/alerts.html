@@ -13,7 +13,10 @@
 </head>
 <body>
 <h1>Fraud Alerts</h1>
-<p><a id="new-alert-link" th:href="@{/alerts/new}">Add new alert</a></p>
+<p>
+  <a id="new-alert-link" th:href="@{/alerts/new}">Add new alert</a> |
+  <a id="exceptions-link" th:href="@{/exceptions}">Exceptions</a>
+</p>
 <p id="success-message" class="message" th:if="${message}" th:text="${message}"></p>
 
 <table id="alert-table" th:unless="${#lists.isEmpty(alerts)}">
