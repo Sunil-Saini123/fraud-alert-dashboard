@@ -70,8 +70,8 @@ Work is planned as GitHub issues and delivered through short-lived feature branc
 
 | Stage | Tooling | Status |
 |-------|---------|--------|
-| Repository and branching | Git, GitHub | In progress |
-| Continuous integration | Jenkins, Maven | Planned |
+| Repository and branching | Git, GitHub | Done |
+| Continuous integration | Jenkins, Maven | In progress |
 | Quality gate | Selenium, JUnit | Planned |
 | Containerisation | Docker | Planned |
 | Provisioning | Puppet or Ansible | Planned |
