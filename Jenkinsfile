@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK-21'
-        maven 'Maven-3.9.16'
+        jdk 'jdk-21'
+        maven 'maven-3.9'
     }
 
     parameters {
@@ -28,34 +28,31 @@ pipeline {
             }
         }
 
+        stage('Test') {
+            steps {
+                bat 'mvn -B test -Pselenium'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/TEST-*.xml'
+                    archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyArchive: true
+                }
+            }
+        }
+
         stage('Package') {
             steps {
-                bat 'mvn -B package'
+                bat 'mvn -B package -DskipTests'
                 archiveArtifacts artifacts: 'target/*.war'
             }
         }
 
         stage('Deploy') {
-        steps {
-            script {
-                    def tomcatHome = params.TOMCAT_HOME
-                    def appName = env.APP_NAME
-
-                    if (!fileExists("${tomcatHome.replace('\\', '/')}/webapps")) {
-                        error "Tomcat webapps directory not found: ${tomcatHome}\\webapps"
-                    }
-
-                    bat """
-                        copy /y "target\\fraud-alert-dashboard-0.0.1-SNAPSHOT.war" "${tomcatHome}\\webapps\\${appName}.war"
-                        if errorlevel 1 exit /b 1
-                    """
-
-                    echo "WAR copied to ${tomcatHome}\\webapps\\${appName}.war"
-                    echo "Application URL: http://localhost:${params.TOMCAT_PORT}/${appName}/"
-                }
+            steps {
+                bat 'copy /y target\\*.war "%TOMCAT_HOME%\\webapps\\%APP_NAME%.war"'
+                echo "Deployed to http://localhost:${params.TOMCAT_PORT}/${env.APP_NAME}/"
             }
         }
-
     }
 
     post {
