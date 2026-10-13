@@ -3,6 +3,7 @@ package com.example.fraudalert.selenium;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,10 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.edge.EdgeOptions;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.FileSystemUtils;
@@ -112,6 +116,19 @@ public abstract class BaseSeleniumTest {
         return !driver.findElements(By.id(id)).isEmpty();
     }
 
+    /**
+     * Clicks a button or link that loads a new page and waits until the new page has loaded,
+     * so the test never reads the old page by mistake.
+     */
+    void clickAndWait(String id) {
+        WebElement oldPage = driver.findElement(By.tagName("html"));
+        driver.findElement(By.id(id)).click();
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        wait.until(ExpectedConditions.stalenessOf(oldPage));
+        wait.until((ExpectedCondition<Boolean>) d ->
+                "complete".equals(((JavascriptExecutor) d).executeScript("return document.readyState")));
+    }
+
     /** Reads the number shown on a dashboard indicator, e.g. "NEW". */
     int indicator(String name) {
         return Integer.parseInt(
@@ -131,6 +148,6 @@ public abstract class BaseSeleniumTest {
             WebElement due = driver.findElement(By.id("dueDate"));
             ((JavascriptExecutor) driver).executeScript("arguments[0].value = arguments[1];", due, dueDate);
         }
-        driver.findElement(By.id("save-button")).click();
+        clickAndWait("save-button");
     }
 }
