@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    triggers {
+        pollSCM('H/2 * * * *')
+    }
+
     tools {
         jdk 'JDK-21'
         maven 'Maven-3.9.16'
@@ -12,7 +16,12 @@ pipeline {
     }
 
     environment {
-        APP_NAME = 'fraud-alert-dashboard'
+        APP_NAME       = 'fraud-alert-dashboard'
+        REGISTRY       = 'localhost:5000'
+        IMAGE_NAME     = 'fraud-alert-dashboard'
+        IMAGE_TAG      = "1.0.${BUILD_NUMBER}"
+        CONTAINER_NAME = 'fraud-app'
+        CONTAINER_PORT = '8082'
     }
 
     stages {
@@ -30,7 +39,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                bat 'mvn -B test -Pselenium -Dbrowser=chrome'
+                bat 'mvn -B test -Pselenium'
             }
             post {
                 always {
@@ -68,6 +77,27 @@ pipeline {
             }
         }
 
+        stage('Docker Build') {
+            steps {
+                bat 'docker build -t %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG% -t %REGISTRY%/%IMAGE_NAME%:latest .'
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                bat 'docker push %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG%'
+                bat 'docker push %REGISTRY%/%IMAGE_NAME%:latest'
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                bat(returnStatus: true, script: 'docker rm -f %CONTAINER_NAME%')
+                bat 'docker pull %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG%'
+                bat 'docker run -d --name %CONTAINER_NAME% -p %CONTAINER_PORT%:8081 %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG%'
+                echo "Container started: http://localhost:${env.CONTAINER_PORT}/ using ${env.REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+            }
+        }
     }
 
     post {
