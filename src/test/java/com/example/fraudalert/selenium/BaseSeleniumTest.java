@@ -43,14 +43,14 @@ public abstract class BaseSeleniumTest {
         if ("chrome".equalsIgnoreCase(browser)) {
             ChromeOptions options = new ChromeOptions();
             if (headless) {
-                options.addArguments("--headless=new");
+                options.addArguments("--headless=new", "--no-sandbox", "--disable-gpu");
             }
             options.addArguments("--window-size=1366,900");
             driver = new ChromeDriver(options);
         } else {
             EdgeOptions options = new EdgeOptions();
             if (headless) {
-                options.addArguments("--headless=new");
+                options.addArguments("--headless=new", "--no-sandbox", "--disable-gpu");
             }
             options.addArguments("--window-size=1366,900");
             driver = new EdgeDriver(options);
