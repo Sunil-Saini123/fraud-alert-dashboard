@@ -1,5 +1,9 @@
 package com.example.fraudalert.selenium;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -15,6 +19,7 @@ import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.support.ui.Select;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.util.FileSystemUtils;
 
 /**
  * Starts the application on a random port with an in-memory database,
@@ -36,23 +41,30 @@ public abstract class BaseSeleniumTest {
 
     private WebDriver driver;
 
+    private Path profileDir;
+
     @BeforeEach
-    void startBrowser() {
+    void startBrowser() throws IOException {
         boolean headless = Boolean.parseBoolean(System.getProperty("headless", "true"));
         String browser = System.getProperty("browser", "edge");
+        // A fresh, temporary browser profile works for any Windows account, including the Jenkins service
+        profileDir = Files.createTempDirectory("selenium-profile-");
+        String profileArg = "--user-data-dir=" + profileDir.toAbsolutePath();
         if ("chrome".equalsIgnoreCase(browser)) {
             ChromeOptions options = new ChromeOptions();
+            options.addArguments(profileArg, "--no-first-run", "--no-default-browser-check",
+                    "--disable-dev-shm-usage", "--window-size=1366,900");
             if (headless) {
                 options.addArguments("--headless=new", "--no-sandbox", "--disable-gpu");
             }
-            options.addArguments("--window-size=1366,900");
             driver = new ChromeDriver(options);
         } else {
             EdgeOptions options = new EdgeOptions();
+            options.addArguments(profileArg, "--no-first-run", "--no-default-browser-check",
+                    "--disable-dev-shm-usage", "--window-size=1366,900");
             if (headless) {
                 options.addArguments("--headless=new", "--no-sandbox", "--disable-gpu");
             }
-            options.addArguments("--window-size=1366,900");
             driver = new EdgeDriver(options);
         }
     }
@@ -61,6 +73,11 @@ public abstract class BaseSeleniumTest {
     void stopBrowser() {
         if (driver != null) {
             driver.quit();
+        }
+        try {
+            FileSystemUtils.deleteRecursively(profileDir);
+        } catch (IOException | RuntimeException ignored) {
+            // the temporary profile folder is cleaned up on a best-effort basis
         }
     }
 
