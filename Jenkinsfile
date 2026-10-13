@@ -28,9 +28,21 @@ pipeline {
             }
         }
 
+        stage('Test') {
+            steps {
+                bat 'mvn -B test -Pselenium -Dbrowser=chrome'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/TEST-*.xml'
+                    archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyArchive: true
+                }
+            }
+        }
+
         stage('Package') {
             steps {
-                bat 'mvn -B package'
+                bat 'mvn -B package -DskipTests'
                 archiveArtifacts artifacts: 'target/*.war'
             }
         }

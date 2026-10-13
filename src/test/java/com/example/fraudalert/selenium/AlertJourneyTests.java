@@ -5,11 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-
-import java.time.Duration;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 /** Critical user journeys of the Fraud Alert Review Dashboard. */
 class AlertJourneyTests extends BaseSeleniumTest {
@@ -19,37 +14,24 @@ class AlertJourneyTests extends BaseSeleniumTest {
         String txn = uniqueId();
 
         addAlert(txn, "Amit Verma", "25000.00", "HIGH", "NEW", null);
-        assertTrue(
-            getDriver().getCurrentUrl().contains("/alerts"),
-            "Expected to be redirected to the alerts list, but URL was: "
-                + getDriver().getCurrentUrl()
-        );
+
+        String url = getDriver().getCurrentUrl();
+        assertTrue(url.contains("/alerts"), "Unexpected page after saving: " + url);
         assertEquals("Alert saved successfully", text("success-message"));
         assertTrue(text("alert-table").contains(txn));
     }
 
-    
     @Test
     void journey2_invalidAlert_showsErrorsAndSavesNothing() {
         open("/alerts/new");
         type("amount", "-5");
-        getDriver().findElement(By.id("save-button")).click();
+        clickAndWait("save-button");
 
-        new WebDriverWait(getDriver(), Duration.ofSeconds(10))
-                .until(ExpectedConditions.textToBePresentInElementLocated(
-                        By.tagName("body"), "Transaction ID is required"));
-
-        String pageText = getDriver()
-                .findElement(By.tagName("body"))
-                .getText();
-
-        assertTrue(exists("alert-form"),
-                "The alert form should remain visible when validation fails");
-
-        assertTrue(pageText.contains("Transaction ID is required"));
-        assertTrue(pageText.contains("Customer name is required"));
-        assertTrue(pageText.contains("Amount must be greater than 0"));
-        assertTrue(pageText.contains("Risk level is required"));
+        assertTrue(exists("alert-form"));
+        assertEquals("Transaction ID is required", text("transactionId-error"));
+        assertEquals("Customer name is required", text("customerName-error"));
+        assertEquals("Amount must be greater than 0", text("amount-error"));
+        assertEquals("Risk level is required", text("riskLevel-error"));
     }
 
     @Test
@@ -61,13 +43,13 @@ class AlertJourneyTests extends BaseSeleniumTest {
 
         open("/alerts");
         type("q", token);
-        getDriver().findElement(By.id("search-button")).click();
+        clickAndWait("search-button");
         assertEquals("1 alert(s) shown", text("result-count"));
         assertTrue(text("alert-table").contains(matching));
 
         open("/alerts");
         type("q", "NoSuchCustomer" + System.nanoTime());
-        getDriver().findElement(By.id("search-button")).click();
+        clickAndWait("search-button");
         assertEquals("No alerts found.", text("no-alerts"));
     }
 
@@ -80,7 +62,7 @@ class AlertJourneyTests extends BaseSeleniumTest {
 
         open("/");
         assertEquals(before + 1, indicator("NEW"));
-        getDriver().findElement(By.id("indicator-NEW")).click();
+        clickAndWait("indicator-NEW");
         assertEquals((before + 1) + " alert(s) shown", text("result-count"));
     }
 
