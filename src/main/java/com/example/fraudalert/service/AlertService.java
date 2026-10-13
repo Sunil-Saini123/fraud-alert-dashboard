@@ -57,7 +57,6 @@ public class AlertService {
     public List<Alert> findExceptions() {
         LocalDate today = LocalDate.now();
         return findAll().stream()
-                .filter(a -> a.getStatus() != AlertStatus.CLOSED)
                 .filter(a -> a.getRiskLevel() == RiskLevel.HIGH
                         || (a.getDueDate() != null && a.getDueDate().isBefore(today)))
                 .toList();
