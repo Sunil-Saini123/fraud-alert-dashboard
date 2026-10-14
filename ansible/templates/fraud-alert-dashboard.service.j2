@@ -1,0 +1,19 @@
+# Managed by Ansible - changes will be overwritten
+[Unit]
+Description=Fraud Alert Review Dashboard
+After=network.target
+
+[Service]
+User={{ app_user }}
+Group={{ app_group }}
+WorkingDirectory={{ app_data }}
+EnvironmentFile=/etc/{{ app_name }}.env
+ExecStart=/usr/bin/java $JAVA_OPTS -jar {{ app_home }}/current/app.war
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:{{ app_log }}/app.log
+StandardError=append:{{ app_log }}/app.log
+
+[Install]
+WantedBy=multi-user.target
