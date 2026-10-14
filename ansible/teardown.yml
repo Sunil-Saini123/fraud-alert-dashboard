@@ -1,0 +1,57 @@
+---
+- name: Remove the Fraud Alert Review Dashboard from the node (clean state)
+  hosts: app_servers
+  become: true
+
+  vars:
+    app_name: fraud-alert-dashboard
+    app_user: fraudapp
+    app_group: fraudapp
+    app_home: /opt/fraud-alert-dashboard
+    app_data: /var/lib/fraud-alert-dashboard
+    app_log: /var/log/fraud-alert-dashboard
+
+  tasks:
+    - name: Stop and disable the service
+      ansible.builtin.systemd:
+        name: "{{ app_name }}"
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Remove the service unit and the environment file
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/etc/systemd/system/{{ app_name }}.service"
+        - "/etc/{{ app_name }}.env"
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Remove the application folders
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ app_home }}"
+        - "{{ app_data }}"
+        - "{{ app_log }}"
+
+    - name: Remove the application user
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        state: absent
+
+    - name: Remove the application group
+      ansible.builtin.group:
+        name: "{{ app_group }}"
+        state: absent
+
+    - name: Remove Java
+      ansible.builtin.apt:
+        name: openjdk-21-jre-headless
+        state: absent
+        autoremove: true

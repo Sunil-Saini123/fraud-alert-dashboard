@@ -1,0 +1,118 @@
+---
+- name: Deploy a release of the Fraud Alert Review Dashboard
+  hosts: app_servers
+  become: true
+
+  # Run with: -e release_version=1.1.0 -e war_src=/path/to/file.war
+  vars:
+    app_name: fraud-alert-dashboard
+    app_user: fraudapp
+    app_group: fraudapp
+    app_home: /opt/fraud-alert-dashboard
+    app_port: 8081
+    health_url: "http://localhost:{{ app_port }}/actuator/health"
+
+  tasks:
+    - name: Check that a version and a WAR file were given
+      ansible.builtin.assert:
+        that:
+          - release_version is defined
+          - war_src is defined
+        fail_msg: "Run with -e release_version=1.1.0 -e war_src=/path/to/file.war"
+
+    - name: Remember which release is active now
+      ansible.builtin.stat:
+        path: "{{ app_home }}/current"
+      register: current_link
+
+    - name: Deploy the new release and check its health
+      block:
+        - name: Create the release folder
+          ansible.builtin.file:
+            path: "{{ app_home }}/releases/{{ release_version }}"
+            state: directory
+            owner: "{{ app_user }}"
+            group: "{{ app_group }}"
+            mode: "0755"
+
+        - name: Copy the WAR file into the release folder
+          ansible.builtin.copy:
+            src: "{{ war_src }}"
+            dest: "{{ app_home }}/releases/{{ release_version }}/app.war"
+            owner: "{{ app_user }}"
+            group: "{{ app_group }}"
+            mode: "0644"
+
+        - name: Point the current link to the new release
+          ansible.builtin.file:
+            src: "{{ app_home }}/releases/{{ release_version }}"
+            dest: "{{ app_home }}/current"
+            state: link
+            owner: "{{ app_user }}"
+            group: "{{ app_group }}"
+          notify: Restart application
+
+        - name: Restart the application now if the release changed
+          ansible.builtin.meta: flush_handlers
+
+        - name: Make sure the service is running
+          ansible.builtin.systemd:
+            name: "{{ app_name }}"
+            state: started
+
+        - name: Health check of the new release
+          ansible.builtin.uri:
+            url: "{{ health_url }}"
+            return_content: true
+          register: health
+          until: health.status | default(0) == 200 and '"UP"' in (health.content | default(''))
+          retries: 12
+          delay: 5
+
+        - name: Report the health check result
+          ansible.builtin.debug:
+            msg: "Release {{ release_version }} is healthy: {{ health.content }}"
+
+      rescue:
+        - name: Report the failed release
+          ansible.builtin.debug:
+            msg: "Release {{ release_version }} failed its health check. Rolling back."
+
+        - name: Return to the previous stable release
+          when: current_link.stat.exists and current_link.stat.islnk
+          block:
+            - name: Point the current link back to the previous release
+              ansible.builtin.file:
+                src: "{{ current_link.stat.lnk_source }}"
+                dest: "{{ app_home }}/current"
+                state: link
+                owner: "{{ app_user }}"
+                group: "{{ app_group }}"
+
+            - name: Restart the application on the previous release
+              ansible.builtin.systemd:
+                name: "{{ app_name }}"
+                state: restarted
+
+            - name: Health check after the rollback
+              ansible.builtin.uri:
+                url: "{{ health_url }}"
+                return_content: true
+              register: health_after
+              until: health_after.status | default(0) == 200 and '"UP"' in (health_after.content | default(''))
+              retries: 12
+              delay: 5
+
+            - name: Report the recovery
+              ansible.builtin.debug:
+                msg: "Rolled back to {{ current_link.stat.lnk_source }}: {{ health_after.content }}"
+
+        - name: Mark the deployment as failed
+          ansible.builtin.fail:
+            msg: "Release {{ release_version }} was rejected. The previous release is active again."
+
+  handlers:
+    - name: Restart application
+      ansible.builtin.systemd:
+        name: "{{ app_name }}"
+        state: restarted
