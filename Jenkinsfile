@@ -22,6 +22,7 @@ pipeline {
         IMAGE_TAG      = "1.0.${BUILD_NUMBER}"
         CONTAINER_NAME = 'fraud-app'
         CONTAINER_PORT = '8082'
+        WSL_DISTRO     = 'Ubuntu'
     }
 
     stages {
@@ -39,7 +40,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                bat 'mvn -B test -Pselenium -Dbrowser=chrome'
+                bat 'mvn -B test -Pselenium'
             }
             post {
                 always {
@@ -96,6 +97,19 @@ pipeline {
                 bat 'docker pull %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG%'
                 bat 'docker run -d --name %CONTAINER_NAME% -p %CONTAINER_PORT%:8081 %REGISTRY%/%IMAGE_NAME%:%IMAGE_TAG%'
                 echo "Container started: http://localhost:${env.CONTAINER_PORT}/ using ${env.REGISTRY}/${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+            }
+        }
+
+        stage('Ansible Deploy') {
+            steps {
+                script {
+                    def ws = env.WORKSPACE.replace('\\', '/')
+                    def wslWorkspace = '/mnt/' + ws.substring(0, 1).toLowerCase() + ws.substring(2)
+                    def prepare = "export ANSIBLE_NOCOLOR=1 && rm -rf ~/ansible && cp -r ${wslWorkspace}/ansible ~/ansible && cd ~/ansible"
+                    def provision = "ansible-playbook -i inventory.ini site.yml"
+                    def deploy = "ansible-playbook -i inventory.ini deploy.yml -e release_version=${env.IMAGE_TAG} -e war_src=${wslWorkspace}/target/fraud-alert-dashboard-0.0.1-SNAPSHOT.war"
+                    bat "wsl -d %WSL_DISTRO% -- bash -lc \"${prepare} && ${provision} && ${deploy}\""
+                }
             }
         }
     }
