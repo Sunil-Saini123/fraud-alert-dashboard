@@ -40,7 +40,7 @@ pipeline {
 
         stage('Test') {
             steps {
-                bat 'mvn -B test -Pselenium'
+                bat 'mvn -B test -Pselenium -Dbrowser=chrome'
             }
             post {
                 always {
