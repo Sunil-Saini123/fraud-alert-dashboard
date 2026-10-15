@@ -1,0 +1,3 @@
+# Send only the built WAR to Docker, nothing else from the project
+*
+!target/*.war
