@@ -71,6 +71,24 @@ public abstract class BaseSeleniumTest {
             }
             driver = new EdgeDriver(options);
         }
+        // Authenticate before any test interacts with protected pages
+        login("admin", "admin123");
+    }
+
+    /**
+     * Navigates to the login page, fills the credentials and submits the form.
+     * Waits until the browser leaves the /login URL before returning.
+     */
+    void login(String username, String password) {
+        open("/login");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id("username")));
+        driver.findElement(By.id("username")).sendKeys(username);
+        driver.findElement(By.id("password")).sendKeys(password);
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+        // Wait until we are redirected away from the login page
+        wait.until(ExpectedConditions.not(
+                ExpectedConditions.urlContains("/login")));
     }
 
     @AfterEach
